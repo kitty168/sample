@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Auth;
 
 class UsersController extends Controller
 {
@@ -44,6 +45,9 @@ class UsersController extends Controller
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
+
+        //创建用户成功后，执行登陆动作
+        Auth::login($user);
 
         //通过session的闪存来临时保存用户数据
         session()->flash('success', '欢迎，您将在这里开启一段新的旅程~');

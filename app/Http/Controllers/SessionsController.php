@@ -8,7 +8,7 @@ use Auth;
 class SessionsController extends Controller
 {
     /**
-     * 显示登陆页面
+     * 显示登陆页面，git测试
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function create()

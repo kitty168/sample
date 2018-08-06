@@ -1,5 +1,8 @@
 <?php
 
+//加载自定义的数据参数
+$db_config = get_db_config();
+
 return [
 
     /*
@@ -13,7 +16,9 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    //'default' => env('DB_CONNECTION', 'mysql'),
+    //变更默认的数据库链接方式
+    'default' => $db_config['connection'],
 
     /*
     |--------------------------------------------------------------------------

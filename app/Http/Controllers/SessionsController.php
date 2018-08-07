@@ -7,6 +7,13 @@ use Auth;
 
 class SessionsController extends Controller
 {
+    public function __construct()
+    {
+        /*$this->middleware('auth', [
+            'only' => ['create']
+        ]);*/
+    }
+
     /**
      * 显示登陆页面，git测试
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
@@ -17,6 +24,7 @@ class SessionsController extends Controller
     }
 
     /**
+     * 执行登录动作
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -33,10 +41,13 @@ class SessionsController extends Controller
         if(Auth::attempt($credentials, $request->has('remember'))){
             //登录成功后的相关操作
             session()->flash('success', '欢迎回来！');
-            return redirect()->route('users.show', [Auth::user()]);
+
+            //intended方法可将页面重定向到上一次请求尝试访问的页面上，
+            //并接收一个默认跳转地址参数，当上一次请求记录为空时，跳转到默认地址上。
+            return redirect()->intended(route('users.show', [Auth::user()]));
         }else{
             //登录失败后的相关操作
-            session()->flash('danger', '很抱歉，您的邮箱喝密码不匹配');
+            session()->flash('danger', '很抱歉，您的邮箱和密码不匹配');
             return redirect()->back()->withInput();
         }
     }

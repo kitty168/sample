@@ -163,6 +163,17 @@ section.user_info {
   border-radius: 50%;
 }
 
+/* Users edit */
+
+.gravatar_edit {
+  margin: 15px auto;
+  text-align: center;
+  .gravatar {
+    float: none;
+    max-width: 100px;
+  }
+}
+
 /* forms */
 
 input, textarea, select, .uneditable-input {

@@ -163,6 +163,24 @@ section.user_info {
   border-radius: 50%;
 }
 
+/* Users index */
+
+.users {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+  li {
+    overflow: auto;
+    padding: 10px 0;
+    border-bottom: 1px solid $gray-lighter;
+  }
+}
+.delete-btn {
+  float: right;
+  position: relative;
+  right: 0;
+}
+
 /* Users edit */
 
 .gravatar_edit {

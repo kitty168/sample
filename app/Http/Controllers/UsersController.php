@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * 用户资源控制器
+ */
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -15,11 +18,22 @@ class UsersController extends Controller
             'except' => ['show', 'create', 'store']
         ]);
 
-        /*$this->middleware('auth', [
+        //Auth中间件提供的guest选项，用于指定一些只允许未登录用户访问的动作，
+        //因此我们需要通过对 guest 属性进行设置，只让未登录用户访问登录页面和注册页面。
+        $this->middleware('guest', [
             'only' => ['create']
-        ]);*/
+        ]);
+    }
 
+    public function index()
+    {
+        //$users = User::all();//获取所有用户
 
+        //paginate 方法来指定每页生成的数据数量为 10 条，
+        //即当我们有 50 个用户时，用户列表将被分为五页进行展示。
+        $users = User::paginate(10);
+
+        return view('users.index', compact('users'));
     }
 
     /**
@@ -77,7 +91,9 @@ class UsersController extends Controller
     public function edit(User $user)
     {
         //authorize 方法接收两个参数，第一个为授权策略的名称，第二个为进行授权验证的数据
+        //只有被编辑的用户等于当前用户的时候才能操作
         $this->authorize('update', $user);
+
         return view('users.edit', compact('user'));
     }
 
@@ -111,6 +127,22 @@ class UsersController extends Controller
         session()->flash('success', '个人资料更新成功！');
 
         return redirect()->route('users.show', $user->id);
+    }
+
+    /**
+     * 删除用户
+     * @param User $user
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws \Exception
+     */
+    public function destroy(User $user)
+    {
+        //引入验证策略destroy
+        $this->authorize('destroy', $user);
+
+        $user->delete();
+        session()->flash('success', '成功删除用户！');
+        return back();
     }
 
 }

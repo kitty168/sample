@@ -29,4 +29,15 @@ class UserPolicy
     {
         return $currentUser->id === $user->id;
     }
+
+    /**
+     * 当前策略为：只有管理员才能执行删除，且管理不能自己删除自己
+     * @param User $currenUser
+     * @param User $user
+     * @return bool
+     */
+    public function destroy(User $currenUser, User $user)
+    {
+        return $currenUser->is_admin && $currenUser->id !== $user->id;
+    }
 }

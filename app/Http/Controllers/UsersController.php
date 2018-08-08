@@ -6,6 +6,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Auth;
 use Mail;
@@ -14,7 +15,16 @@ class UsersController extends Controller
 {
     public function __construct()
     {
-        //引入中间件
+        //引入中间件，
+        /*
+         * 我们在 __construct 方法中调用了 middleware 方法，
+         * 该方法接收两个参数，第一个为中间件的名称，第二个为要进行过滤的动作。
+         * 我们通过 except 方法来设定 指定动作 不使用 Auth 中间件进行过滤，
+         * 意为 —— 除了此处指定的动作以外，所有其他动作都必须登录用户才能访问，类似于黑名单的过滤机制。
+         * 相反的还有 only 白名单方法，将只过滤指定动作。
+         * 我们提倡在控制器 Auth 中间件使用中，首选 except 方法，
+         * 这样的话，当你新增一个控制器方法时，默认是安全的，此为最佳实践。
+         */
         $this->middleware('auth', [
             'except' => ['show', 'create', 'store', 'index', 'confirmEmail']
         ]);
@@ -100,11 +110,16 @@ class UsersController extends Controller
      */
     public function edit(User $user)
     {
-        //authorize 方法接收两个参数，第一个为授权策略的名称，第二个为进行授权验证的数据
-        //只有被编辑的用户等于当前用户的时候才能操作
-        $this->authorize('update', $user);
+        try {
+            //authorize 方法接收两个参数，第一个为授权策略的名称，第二个为进行授权验证的数据
+            //只有被编辑的用户等于当前用户的时候才能操作
+            $this->authorize('update', $user);
 
+        }catch (AuthorizationException $e){
+            return abort(403, '无权访问');
+        }
         return view('users.edit', compact('user'));
+
     }
 
     /**
@@ -121,9 +136,16 @@ class UsersController extends Controller
             'password' => 'nullable|confirmed|min:6',
         ]);
 
-        //authorize 方法接收两个参数，第一个为授权策略的名称，第二个为进行授权验证的数据
-        //它可以被用于快速授权一个指定的行为，当无权限运行该行为时会抛出 HttpException
-        $this->authorize('update', $user);
+        try {
+            //authorize 方法接收两个参数，第一个为授权策略的名称，第二个为进行授权验证的数据
+            //它可以被用于快速授权一个指定的行为，当无权限运行该行为时会抛出 HttpException
+            $this->authorize('update', $user);
+
+        } catch (AuthorizationException $e) {
+            return abort(403, '无权访问');
+        }
+
+
 
         $data = [];
         $data['name'] = $request->name;
@@ -155,6 +177,10 @@ class UsersController extends Controller
         return back();
     }
 
+    /**
+     * 发送确认邮件到用户邮箱
+     * @param $user
+     */
     protected function sendEmailConfirmationTo($user)
     {
         $view = 'emails.confirm';

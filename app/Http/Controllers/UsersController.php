@@ -8,6 +8,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Auth;
+use Mail;
 
 class UsersController extends Controller
 {
@@ -15,7 +16,7 @@ class UsersController extends Controller
     {
         //引入中间件
         $this->middleware('auth', [
-            'except' => ['show', 'create', 'store']
+            'except' => ['show', 'create', 'store', 'index', 'confirmEmail']
         ]);
 
         //Auth中间件提供的guest选项，用于指定一些只允许未登录用户访问的动作，
@@ -37,7 +38,7 @@ class UsersController extends Controller
     }
 
     /**
-     * create试图显示
+     * 显示用户注册视图
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function create()
@@ -74,12 +75,21 @@ class UsersController extends Controller
             'password' => bcrypt($request->password),
         ]);
 
+        /*
         //创建用户成功后，执行登陆动作
         Auth::login($user);
 
         //通过session的闪存来临时保存用户数据
         session()->flash('success', '欢迎，您将在这里开启一段新的旅程~');
         return redirect()->route('users.show', [$user]);
+        */
+
+        //发送验证码到用户注册的邮箱上
+        $this->sendEmailConfirmationTo($user);
+
+        session()->flash('success', '验证邮件已发送到你的注册邮箱上，请注意查收。');
+        return redirect('/');
+
     }
 
     /**
@@ -143,6 +153,40 @@ class UsersController extends Controller
         $user->delete();
         session()->flash('success', '成功删除用户！');
         return back();
+    }
+
+    protected function sendEmailConfirmationTo($user)
+    {
+        $view = 'emails.confirm';
+        $data = compact('user');
+        $from = 'aufree@yousails.com';
+        $name = 'Aufree';
+        $to = $user->email;
+        $subject = '感谢注册 Sample 应用！请确认你的邮箱。';
+
+        //发送邮件
+        Mail::send($view, $data, function ($message) use ($from, $name, $to, $subject){
+            $message->from($from, $name)->to($to)->subject($subject);
+        });
+    }
+
+    /**
+     * 通过邮件发送的链接，来激活用户账号
+     * @param $token
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function confirmEmail($token)
+    {
+        $user = User::where('activation_token', $token)->firstOrFail();
+
+        $user->activated = true;
+        $user->activation_token = null;
+        $user->save();
+
+        //登录
+        Auth::login($user);
+        session()->flash('success', '恭喜您，激活成功！');
+        return redirect()->route('users.show', [$user]);
     }
 
 }

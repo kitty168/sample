@@ -5,6 +5,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Models\Status;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -63,7 +64,12 @@ class UsersController extends Controller
      */
     public function show(User $user)
     {
-        return view('users.show', compact('user'));
+        //通过$user->statuses()获取此用户的微博信息
+        $statuses = $user->statuses()
+            ->orderBy('created_at', 'desc')
+            ->paginate(5);
+
+        return view('users.show', compact('user', 'statuses'));
     }
 
     /**
@@ -217,5 +223,4 @@ class UsersController extends Controller
         session()->flash('success', '恭喜您，激活成功！');
         return redirect()->route('users.show', [$user]);
     }
-
 }

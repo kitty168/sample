@@ -14,7 +14,12 @@ class DatabaseSeeder extends Seeder
     {
         // $this->call(UsersTableSeeder::class);
         Model::unguard();
+
+        //指定调用用户数据填充文件
         $this->call(UsersTableSeeder::class);
+        //指定调用微博数据填充文件
+        $this->call(StatusesTableSeeder::class);
+
         Model::reguard();
     }
 }

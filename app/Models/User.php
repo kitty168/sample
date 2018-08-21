@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Notifications\ResetPassword;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Auth;
 
 class User extends Authenticatable
 {
@@ -44,6 +45,11 @@ class User extends Authenticatable
         });
     }
 
+    /**
+     * 生成用户头像
+     * @param string $size
+     * @return string
+     */
     public function gravatar($size = '100')
     {
         /*$hash = md5(strtolower(trim($this->attributes['email'])));
@@ -78,6 +84,74 @@ class User extends Authenticatable
      */
     public function feed()
     {
-        return $this->statuses()->orderBy('created_at', 'desc');
+        //return $this->statuses()->orderBy('created_at', 'desc');
+        //下面是改进的方法
+        /*
+         * $user->followings 与 $user->followings() 调用时返回的数据是不一样的，
+         * $user->followings 返回的是 Eloquent：集合 。
+         * 而 $user->followings() 返回的是 数据库请求构建器
+         */
+        $user_ids = Auth::user()->followings->pluck('id')->toArray();
+        array_push($user_ids, Auth::user()->id);
+
+        //注意with的用法
+        return Status::whereIn('user_id', $user_ids)
+            ->with('user')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * 获取粉丝关系列表，如我有哪些粉丝
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'followers', 'user_id', 'follower_id');
+    }
+
+    /**
+     * 来获取用户关注人列表,如我关注了哪些人
+     * follower_id 是user_id的粉丝
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function followings()
+    {
+        return $this->belongsToMany(User::class, 'followers', 'follower_id', 'user_id');
+    }
+
+    /**
+     * 关注某个用户
+     * @param $user_ids
+     */
+    public function follow($user_ids)
+    {
+        if(!is_array($user_ids)){
+            $user_ids = compact('user_ids');
+        }
+        $this->followings()->sync($user_ids, false);
+    }
+
+    /**
+     * 取消关注
+     * @param $user_ids
+     */
+    public function unfollow($user_ids)
+    {
+        if (!is_array($user_ids)) {
+            $user_ids = compact('user_ids');
+        }
+        $this->followings()->detach($user_ids);
+    }
+
+    /**
+     * 用于判断当前登录的用户 A 是否关注了用户 B，代码实现逻辑很简单，
+     * 我们只需要判断用户 B 是否包含在用户 A 的关注人列表上即可。
+     * 这里我们将用到 contains 方法来做判断
+     * @param $user_id
+     * @return mixed
+     */
+    public function isFollowing($user_id)
+    {
+        return $this->followings->contains($user_id);
     }
 }

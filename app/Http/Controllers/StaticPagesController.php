@@ -13,7 +13,7 @@ class StaticPagesController extends Controller
         $feed_items = [];
         if(Auth::check()){
             //已登录
-            $feed_items = Auth::user()->feed()->paginate(5);
+            $feed_items = Auth::user()->feed()->paginate(20);
         }
         return view('static_pages/home', compact('feed_items'));
     }
